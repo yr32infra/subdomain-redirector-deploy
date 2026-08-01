@@ -1,0 +1,46 @@
+services:
+  redirector:
+    image: ghcr.io/yanorei32/subdomain-redirector:v0.1.0
+    hostname: redirector
+    container_name: redirector${VARIANT:-}__redirector
+
+    restart: unless-stopped
+
+    volumes:
+      - type: bind
+        source: ./subdomain-redirector.toml
+        target: /etc/subdomain-redirector.toml
+        read_only: true
+
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+
+    networks:
+      - default
+
+  cloudflared:
+    image: cloudflare/cloudflared:2026.7.3
+    hostname: cloudflared
+    container_name: redirector${VARIANT:-}__cloudflared
+
+    restart: unless-stopped
+
+    environment:
+      TUNNEL_LOGFILE: /dev/stdout
+
+    command: tunnel run --token ${TUNNEL_TOKEN}
+    user: root
+
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+
+    networks:
+      default:
+
+networks:
+  default:
+    name: redirector${VARIANT:-}__default
